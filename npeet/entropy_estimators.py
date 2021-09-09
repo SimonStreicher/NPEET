@@ -14,7 +14,7 @@ from sklearn.neighbors import BallTree, KDTree
 # CONTINUOUS ESTIMATORS
 
 
-def entropy(x, k=3, base=2):
+def entropy(x, k=3, base=2, local=False):
     """The classic K-L k-nearest neighbor continuous entropy estimator
     x should be a list of vectors, e.g. x = [[1.3], [3.7], [5.1], [2.4]]
     if x is a one-dimensional scalar and we have four samples
@@ -26,7 +26,10 @@ def entropy(x, k=3, base=2):
     tree = build_tree(x)
     nn = query_neighbors(tree, x, k)
     const = digamma(n_elements) - digamma(k) + n_features * log(2)
-    return (const + n_features * np.log(nn).mean()) / log(base)
+    nn_term = np.log(nn)
+    if not local:
+        nn_term = nn_term.mean()
+    return (const + n_features * nn_term) / log(base)
 
 
 def centropy(x, y, k=3, base=2):
@@ -57,7 +60,7 @@ def corex(xs, ys, k=3, base=2):
     return np.sum(cmi_features) - mi(xs, ys, k=k, base=base)
 
 
-def mi(x, y, z=None, k=3, base=2, alpha=0):
+def mi(x, y, z=None, k=3, base=2, alpha=0, local=False):
     """Mutual information of x and y (conditioned on z if z is not None)
     x, y should be a list of vectors, e.g. x = [[1.3], [3.7], [5.1], [2.4]]
     if x is a one-dimensional scalar and we have four samples
@@ -78,31 +81,49 @@ def mi(x, y, z=None, k=3, base=2, alpha=0):
     tree = build_tree(points)
     dvec = query_neighbors(tree, points, k)
     if z is None:
-        a, b, c, d = (
-            avgdigamma(x, dvec),
-            avgdigamma(y, dvec),
-            digamma(k),
-            digamma(len(x)),
-        )
+        if local:
+            a, b, c, d = (
+                local_digamma(x, dvec),
+                local_digamma(y, dvec),
+                digamma(k),
+                digamma(len(x)),
+            )
+        else:
+            a, b, c, d = (
+                avgdigamma(x, dvec),
+                avgdigamma(y, dvec),
+                digamma(k),
+                digamma(len(x)),
+            )
         if alpha > 0:
             d += lnc_correction(tree, points, k, alpha)
     else:
-        xz = np.c_[x, z]
-        yz = np.c_[y, z]
-        a, b, c, d = (
-            avgdigamma(xz, dvec),
-            avgdigamma(yz, dvec),
-            avgdigamma(z, dvec),
-            digamma(k),
-        )
+        if local:
+            xz = np.c_[x, z]
+            yz = np.c_[y, z]
+            a, b, c, d = (
+                local_digamma(xz, dvec),
+                local_digamma(yz, dvec),
+                local_digamma(z, dvec),
+                digamma(k),
+            )
+        else:
+            xz = np.c_[x, z]
+            yz = np.c_[y, z]
+            a, b, c, d = (
+                avgdigamma(xz, dvec),
+                avgdigamma(yz, dvec),
+                avgdigamma(z, dvec),
+                digamma(k),
+            )
     return (-a - b + c + d) / log(base)
 
 
-def cmi(x, y, z, k=3, base=2):
+def cmi(x, y, z, k=3, base=2, local=False):
     """Mutual information of x and y, conditioned on z
     Legacy function. Use mi(x, y, z) directly.
     """
-    return mi(x, y, z=z, k=k, base=base)
+    return mi(x, y, z=z, k=k, base=base, local=local)
 
 
 def kldiv(x, xp, k=3, base=2):
@@ -290,6 +311,15 @@ def avgdigamma(points, dvec):
     dvec = dvec - 1e-15
     num_points = count_neighbors(tree, points, dvec)
     return np.mean(digamma(num_points))
+
+
+def local_digamma(points, dvec):
+    # This part finds number of neighbors in some radius in the marginal space
+    # returns expectation value of <psi(nx)>
+    tree = build_tree(points)
+    dvec = dvec - 1e-15
+    num_points = count_neighbors(tree, points, dvec)
+    return digamma(num_points)
 
 
 def build_tree(points):
