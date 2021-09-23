@@ -2,6 +2,7 @@
 # Testing the NPEET estimators
 
 import random
+from collections import defaultdict
 from math import log, pi
 
 import numpy as np
@@ -14,7 +15,8 @@ from npeet import entropy_estimators as ee
 
 # Differential entropy estimator
 print(
-    "For a uniform distribution with width alpha, the differential entropy is log_2 alpha, setting alpha = 2"
+    "For a uniform distribution with width alpha, the differential entropy "
+    "is log_2 alpha, setting alpha = 2"
 )
 print("and using k=1, 2, 3, 4, 5")
 print(
@@ -26,10 +28,10 @@ print(
 )
 
 # CONDITIONAL MUTUAL INFORMATION
-Ntry = [10, 25, 50, 100, 200]  # , 1000, 2000] #Number of samples to use in estimate
-nsamples = 100  # Number of times to est mutual information for CI
-samplo = int(0.025 * nsamples)  # confidence intervals
-samphi = int(0.975 * nsamples)
+NTRY = [10, 25, 50, 100, 200]  # , 1000, 2000]  # Number of samples to use in estimate
+NSAMPLES = 100  # Number of times to est mutual information for CI
+SAMPLO = int(0.025 * NSAMPLES)  # confidence intervals
+SAMPHI = int(0.975 * NSAMPLES)
 
 print("\nGaussian random variables\n")
 print("Conditional Mutual Information")
@@ -43,60 +45,60 @@ mean = np.array([0, 0, 0])
 cov = np.dot(tmat, np.dot(diag, mat))
 print("covariance matrix")
 print(cov)
-trueent = -0.5 * (3 + log(8.0 * pi * pi * pi * det(cov)))
-trueent += -0.5 * (1 + log(2.0 * pi * cov[2][2]))  # z sub
-trueent += 0.5 * (
+true_ent = -0.5 * (3 + log(8.0 * pi * pi * pi * det(cov)))
+true_ent += -0.5 * (1 + log(2.0 * pi * cov[2][2]))  # z sub
+true_ent += 0.5 * (
     2 + log(4.0 * pi * pi * det([[cov[0][0], cov[0][2]], [cov[2][0], cov[2][2]]]))
 )  # xz sub
-trueent += 0.5 * (
+true_ent += 0.5 * (
     2 + log(4.0 * pi * pi * det([[cov[1][1], cov[1][2]], [cov[2][1], cov[2][2]]]))
 )  # yz sub
-print("true CMI(x:y|x)", trueent / log(2))
+print("true CMI(x:y|x)", true_ent / log(2))
 
 ent = []
 err = []
-for NN in Ntry:
-    tempent = []
-    for j in range(nsamples):
+for NN in NTRY:
+    temp_ent = []
+    for j in range(NSAMPLES):
         points = nr.multivariate_normal(mean, cov, NN)
         x = [point[:1] for point in points]
         y = [point[1:2] for point in points]
         z = [point[2:] for point in points]
-        tempent.append(ee.cmi(x, y, z))
-    tempent.sort()
-    tempmean = np.mean(tempent)
-    ent.append(tempmean)
-    err.append((tempmean - tempent[samplo], tempent[samphi] - tempmean))
+        temp_ent.append(ee.cmi(x, y, z))
+    temp_ent.sort()
+    temp_mean = np.mean(temp_ent)
+    ent.append(temp_mean)
+    err.append((temp_mean - temp_ent[SAMPLO], temp_ent[SAMPHI] - temp_mean))
 
-print("samples used", Ntry)
+print("samples used", NTRY)
 print("estimated CMI", ent)
 print("95% conf int. (a, b) means (mean - a, mean + b)is interval\n", err)
 
 # MUTUAL INFORMATION
 
 print("Mutual Information")
-trueent = 0.5 * (1 + log(2.0 * pi * cov[0][0]))  # x sub
-trueent += 0.5 * (1 + log(2.0 * pi * cov[1][1]))  # y sub
-trueent += -0.5 * (
+true_ent = 0.5 * (1 + log(2.0 * pi * cov[0][0]))  # x sub
+true_ent += 0.5 * (1 + log(2.0 * pi * cov[1][1]))  # y sub
+true_ent += -0.5 * (
     2 + log(4.0 * pi * pi * det([[cov[0][0], cov[0][1]], [cov[1][0], cov[1][1]]]))
 )  # xz sub
-print("true MI(x:y)", trueent / log(2))
+print("true MI(x:y)", true_ent / log(2))
 
 ent = []
 err = []
-for NN in Ntry:
-    tempent = []
-    for j in range(nsamples):
+for NN in NTRY:
+    temp_ent = []
+    for j in range(NSAMPLES):
         points = nr.multivariate_normal(mean, cov, NN)
         x = [point[:1] for point in points]
         y = [point[1:2] for point in points]
-        tempent.append(ee.mi(x, y))
-    tempent.sort()
-    tempmean = np.mean(tempent)
-    ent.append(tempmean)
-    err.append((tempmean - tempent[samplo], tempent[samphi] - tempmean))
+        temp_ent.append(ee.mi(x, y))
+    temp_ent.sort()
+    temp_mean = np.mean(temp_ent)
+    ent.append(temp_mean)
+    err.append((temp_mean - temp_ent[SAMPLO], temp_ent[SAMPHI] - temp_mean))
 
-print("samples used", Ntry)
+print("samples used", NTRY)
 print("estimated MI", ent)
 print("95% conf int.\n", err)
 
@@ -105,20 +107,20 @@ print("\nIF you permute the indices of x, e.g., MI(X:Y) = 0")
 # You can use shuffle_test method to just get mean, standard deviation
 ent = []
 err = []
-for NN in Ntry:
-    tempent = []
-    for j in range(nsamples):
+for NN in NTRY:
+    temp_ent = []
+    for j in range(NSAMPLES):
         points = nr.multivariate_normal(mean, cov, NN)
         x = [point[:1] for point in points]
         y = [point[1:2] for point in points]
         random.shuffle(y)
-        tempent.append(ee.mi(x, y))
-    tempent.sort()
-    tempmean = np.mean(tempent)
-    ent.append(tempmean)
-    err.append((tempmean - tempent[samplo], tempent[samphi] - tempmean))
+        temp_ent.append(ee.mi(x, y))
+    temp_ent.sort()
+    temp_mean = np.mean(temp_ent)
+    ent.append(temp_mean)
+    err.append((temp_mean - temp_ent[SAMPLO], temp_ent[SAMPHI] - temp_mean))
 
-print("samples used", Ntry)
+print("samples used", NTRY)
 print("estimated MI", ent)
 print("95% conf int.\n", err)
 
@@ -126,7 +128,8 @@ print("95% conf int.\n", err)
 
 print("\n\nTest of the discrete entropy estimators\n")
 print(
-    "For z = y xor x, w/x, y uniform random binary, we should get H(x)=H(y)=H(z) = 1, H(x:y) etc = 0, H(x:y|z) = 1"
+    "For z = y xor x, w/x, y uniform random binary, we should get H(x)=H(y)=H(z) = 1, "
+    "H(x:y) etc = 0, H(x:y|z) = 1"
 )
 x = [0, 0, 0, 0, 1, 1, 1, 1]
 y = [0, 1, 0, 1, 0, 1, 0, 1]
@@ -138,14 +141,16 @@ print("H(x:y|z), etc", ee.cmidd(x, y, z), ee.cmidd(z, y, x), ee.cmidd(x, z, y))
 
 # KL Div estimator
 print(
-    "\n\nKl divergence estimator (not symmetric, not required to have same num samples in each sample set"
+    "\n\nKl divergence estimator (not symmetric, not required to have same num samples "
+    "in each sample set"
 )
 print("should be 0 for same distribution")
 sample1 = [[2 * random.random()] for i in range(200)]
 sample2 = [[2 * random.random()] for i in range(300)]
 print("result:", ee.kldiv(sample1, sample2))
 print(
-    "should be infinite for totally disjoint distributions (but this estimator has an upper bound like log(dist) between disjoint prob. masses)"
+    "should be infinite for totally disjoint distributions (but this estimator has an "
+    "upper bound like log(dist) between disjoint prob. masses)"
 )
 sample2 = [[3 + 2 * random.random()] for i in range(300)]
 print("result:", ee.kldiv(sample1, sample2))
@@ -153,24 +158,22 @@ print("result:", ee.kldiv(sample1, sample2))
 
 def test_discrete(size=1000, y_func=lambda x: x ** 2):
     print("\nTest discrete.")
-    from collections import defaultdict
-
     information = defaultdict(list)
     y_entropy = defaultdict(list)
     x_entropy = []
-    for trial in range(10):
-        x = np.random.randint(low=0, high=10, size=size)
+    for _ in range(10):
+        x_in = np.random.randint(low=0, high=10, size=size)
 
         y_random = np.random.randint(low=53, high=53 + 5, size=size)
-        y_deterministic = y_func(x)
+        y_deterministic = y_func(x_in)
         noise = np.random.randint(low=0, high=10, size=size)
         y_noisy = y_deterministic + noise
 
-        information["random"].append(ee.midd(x, y_random))
-        information["deterministic"].append(ee.midd(x, y_deterministic))
-        information["noisy"].append(ee.midd(x, y_noisy))
+        information["random"].append(ee.midd(x_in, y_random))
+        information["deterministic"].append(ee.midd(x_in, y_deterministic))
+        information["noisy"].append(ee.midd(x_in, y_noisy))
 
-        x_entropy.append(ee.entropyd(x))
+        x_entropy.append(ee.entropyd(x_in))
         y_entropy["random"].append(ee.entropyd(y_random))
         y_entropy["deterministic"].append(ee.entropyd(y_deterministic))
         y_entropy["noisy"].append(ee.entropyd(y_noisy))
