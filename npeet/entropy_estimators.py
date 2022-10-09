@@ -340,7 +340,7 @@ def shuffle_test(measure, x, y, z=False, ns=200, ci=0.95, **kwargs):
     """
     x_clone = np.copy(x)  # A copy that we can shuffle
     outputs = []
-    for i in range(ns):
+    for _ in range(ns):
         np.random.shuffle(x_clone)
         if z:
             outputs.append(measure(x_clone, y, z, **kwargs))
@@ -356,6 +356,6 @@ def shuffle_test(measure, x, y, z=False, ns=200, ci=0.95, **kwargs):
 if __name__ == "__main__":
     print("MI between two independent continuous random variables X and Y:")
     np.random.seed(0)
-    x = np.random.randn(1000, 10)
-    y = np.random.randn(1000, 3)
-    print(mi(x, y, base=2, alpha=0))
+    x_test = np.random.randn(1000, 10)
+    y_test = np.random.randn(1000, 3)
+    print(mi(x_test, y_test, base=2, alpha=0))
