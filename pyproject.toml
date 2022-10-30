@@ -1,8 +1,10 @@
 [tool.poetry]
-name = "npeet"
-version = "0.1.1"
-description = ""
-authors = ["Your Name <you@example.com>"]
+name = "NPEET"
+version = "1.0.1"
+description = "Non-parametric Entropy Estimation Toolbox"
+authors = [
+  { name="Greg Ver Steeg", email="greg@isi.edu" },
+]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
