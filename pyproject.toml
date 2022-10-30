@@ -3,7 +3,7 @@ name = "NPEET"
 version = "1.0.1"
 description = "Non-parametric Entropy Estimation Toolbox"
 authors = [
-  { name="Greg Ver Steeg", email="greg@isi.edu" },
+  "Greg Ver Steeg <greg@isi.edu>",
 ]
 
 [tool.poetry.dependencies]
